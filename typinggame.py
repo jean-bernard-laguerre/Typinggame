@@ -4,10 +4,23 @@ from outils import *
 pygame.init()
 
 fenetre = pygame.display.set_mode((800,600))
+pygame.display.set_caption("Typing Game")
 tdr = pygame.time.Clock()
 tps = 0
-police = pygame.font.SysFont('Verdana', 16)
-police_jeu = pygame.font.SysFont('courier', 24)
+police = pygame.font.Font('polices\Orbitron-Medium.ttf', 32)
+police_jeu = pygame.font.Font('polices\ChargeVectorBold.ttf', 24)
+
+bg_menu = pygame.image.load("images/bg_menu.png")
+bg_menu_rect = bg_menu.get_rect()
+
+bg_jeu = pygame.image.load("images/bg_jeu.png")
+bg_jeu_rect = bg_jeu.get_rect()
+
+bg_victoire = pygame.image.load("images/bg_victory.png")
+bg_victoire_rect = bg_jeu.get_rect()
+
+bg_defaite = pygame.image.load("images/bg_defeat.png")
+bg_defaite_rect = bg_jeu.get_rect()
 
 statut_partie = 0
 
@@ -15,12 +28,16 @@ def ecran_menu():
 
     global statut_partie
 
-    if Bouton("Jouer", 350, 350, police).affichage(fenetre):
+    fenetre.blit(bg_menu, bg_menu_rect)
+
+    if Bouton("JOUER", 320, 350, police, 'white').affichage(fenetre):
         nouvelle_partie()
         statut_partie = 1
 
 def ecran_jeu():
     global statut_partie
+
+    fenetre.blit(bg_jeu, bg_jeu_rect)
 
     if jeu.affichage(fenetre, police_jeu):
         statut_partie = 2
@@ -28,17 +45,20 @@ def ecran_jeu():
 def ecran_fin():
     global statut_partie
     
-    score = police.render(f"Score: {jeu.score} points", 1 ,'black')
+    score = police.render(f"Score: {jeu.score} points", 1 ,'white')
 
     if jeu.vie == 0:
+        fenetre.blit(bg_defaite, bg_defaite_rect)
         resultat = police.render("Defaite", 1 ,'black')
     else:
-        resultat = police.render("Victoire", 1 ,'black')
-        fenetre.blit(score, (350, 320))
-        
-    fenetre.blit(resultat, (350, 295))
+        fenetre.blit(bg_victoire, bg_victoire_rect)
+        resultat = police.render("Victoire", 1 ,'white')
+        fenetre.blit(score, (250, 320))
     
-    if Bouton("Retour Menu", 600, 500, police).affichage(fenetre):
+    
+    fenetre.blit(resultat, (325, 295))
+    
+    if Bouton("Retour Menu", 500, 500, police, 'white').affichage(fenetre):
 
         statut_partie = 0
 
