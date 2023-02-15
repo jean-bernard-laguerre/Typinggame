@@ -1,6 +1,7 @@
 import pygame
 import random
 import string
+import json
 
 class Joueur():
 
@@ -25,7 +26,7 @@ class Joueur():
         if self.rect.y + self.rect.h <= b:
             self.vitesse += .2
 
-        if self.rect.y + self.rect.h >= b-100 and self.vitesse > 0:
+        if self.rect.y + self.rect.h >= b-60 and self.vitesse > 0:
             self.vitesse = 0
             self.bouclier = False
 
@@ -43,16 +44,15 @@ class Joueur():
 
 
 class Obstacle():
-    def __init__(self, x, y):
+    def __init__(self, x, y, type, langue):
         
         self.image = pygame.image.load("images/obstacle.png")
-        self.image = pygame.transform.scale(self.image, (250, 20))
+        self.image = pygame.transform.scale(self.image, (250, 30))
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
-
-        self.mot = mot_hasard(1)
         self.descente = False
         self.palier = self.rect.y + 180
+        self.mot = mot_hasard(langue, type)
 
     def affichage_actif(self, surface, police, reponse):
         
@@ -103,11 +103,13 @@ class Obstacle():
 
 class Jeu():
     def __init__(self) -> None:
-        self.joueur = Joueur(300, 470)
-        self.plateforme = []
-        for i in range(3):
-            self.plateforme += [Obstacle(200, 430-(i*180))]
-        self.timer = 10
+
+        self.diff = 'moyen'
+        self.langue = 'Francais'
+        self.type_mot = 'moyen'
+        self.joueur = Joueur(300, 500)
+        self.obstacle = []
+        self.timer = self.chrono()
         self.index = 0
         self.score = 0
         self.vie = 3
@@ -115,19 +117,19 @@ class Jeu():
         
     def affichage(self, surface, police):
 
-        if len(self.reponse) == len(self.plateforme[0].mot) or self.timer <= 0:
+        if len(self.reponse) == len(self.obstacle[0].mot) or self.timer <= 0:
 
             self.validation()
         
         self.joueur.affichage(surface)
-        for i,element in enumerate(self.plateforme):
+        for i,element in enumerate(self.obstacle):
             if i == 0:
                 element.affichage_actif(surface, police, self.reponse)
             else:
                 element.affichage_inactif(surface, police)
 
-        if self.plateforme[0].rect.y >= self.joueur.rect.y+30:
-            self.plateforme.pop(0)
+        if self.obstacle[0].rect.y >= self.joueur.rect.y+30:
+            self.obstacle.pop(0)
 
         score = police.render(f"Score: {self.score}", 1 ,'white')
         temps = police.render(f"{self.timer//1}", 1 ,'white')
@@ -151,25 +153,25 @@ class Jeu():
     
     def validation(self):
 
-        if self.reponse == self.plateforme[0].mot:
+        if self.reponse == self.obstacle[0].mot:
             self.index += 1
-            self.score += int(len(self.plateforme[0].mot)*self.timer//1)
+            self.score += int(len(self.obstacle[0].mot)*self.timer//1)
             self.joueur.bouclier = True
+            self.joueur.saut()
             jouer_son("bruitage/shield.wav")
-            
+
         else:
             self.vie -= 1
             jouer_son("bruitage/digital-hit.wav")
-
-        self.joueur.saut()
+        
         pygame.mixer.music.play()
-        self.plateforme += [Obstacle(200, -110)]
+        self.obstacle += [Obstacle(200, -110, self.type_mot, self.langue)]
 
-        for element in self.plateforme:
+        for element in self.obstacle:
             element.descendre()
 
         self.reponse = ""
-        self.timer = 10
+        self.timer = self.chrono()
     
     def barre(self, surface):
 
@@ -178,6 +180,16 @@ class Jeu():
         
         pygame.draw.rect(surface, 'aquamarine3', progres)
         pygame.draw.rect(surface, 'white', frame, 2)
+
+    def chrono(self):
+
+        match self.diff:
+            case 'facile':
+                return 10
+            case 'moyen':
+                return 7
+            case 'difficile':
+                return 4
         
 
 class Bouton():
@@ -200,29 +212,26 @@ class Bouton():
                 jouer_son("bruitage/select.wav")
                 action = True
 
-        pygame.draw.rect(surface, 'red', self.rect, 2)
         surface.blit(self.texte, ( self.rect.x+10, self.rect.y+10))
 
         return action
 
 
 #Recupere un mot au hasard d'un fichier defini
-def mot_hasard(niveau):
+def mot_hasard(langue, type):
 
-    match niveau:
-        case 1:
-            f = open("dictionnaires/motsFacile.txt", "r")
-        case 2:
-            f = open("dictionnaires/motsMedium.txt", "r")
-        case 3:
-            f = open("dictionnaires/motsDifficile.txt", "r")
-        case _:
-            f = open("dictionnaires/mots.txt", "r")
+    f = open("dictionnaires/mots.json", "r+")
+    mots = json.load(f)
+    f.close
+    
+    if langue != "Multi":
+        return random.choice(mots[langue][type]) 
 
-    mots = f.read().splitlines()
-    f.close()
+    liste_mots = []
+    for lng in mots:
+        liste_mots += mots[lng][type]
 
-    return random.choice(mots)
+    return random.choice(liste_mots)
 
 
 def jouer_son(titre):
