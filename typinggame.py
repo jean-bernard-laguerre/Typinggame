@@ -46,6 +46,7 @@ pygame.mixer.music.load("musique/Audiorezout - Subterranean.mp3")
 
 jeu = Jeu()
 statut = 0
+pygame.mixer.music.set_volume(.7)
 pygame.mixer.music.play(-1)
 
 
@@ -183,7 +184,7 @@ def navigation(page):
 en_cours = True
 while en_cours:
 
-    tps = tdr.tick(60) / 1000
+    tps = tdr.tick(30) / 10000
     fenetre.fill((255,255,255))
 
     match statut:
